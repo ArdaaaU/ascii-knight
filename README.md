@@ -1,73 +1,63 @@
-# ASCII Knight — Tersine Mühendislik ve Yeniden İnşa (Reverse Engineered)
+# ASCII Knight
 
-[ascii-knight.vercel.app](https://ascii-knight.vercel.app/) projesinin tersine mühendislik (reverse engineering) ile kaynak kodları, veri modelleri, matematiksel algoritmaları ve görsel fiziği çözümlenmiş ve sıfırdan modernize edilerek yeniden oluşturulmuştur.
+> Rüzgarda dalgalanan kırmızı pelerini, derinlikli çayır simülasyonu ve gerçek zamanlı sinematik atmosferiyle geliştirilmiş interaktif bir ASCII Art web deneyimi.
 
----
-
-## 🔍 Tersine Mühendislik Analizi (Reverse Engineering Breakdown)
-
-Orijinal site incelendiğinde harici bir oyun motoru (Three.js, Pixi.js vb.) veya TailwindCSS yerine, doğrudan **HTML5 Canvas** üzerinde çalışan saf, optimize edilmiş bir ASCII rasterizer ve matematiksel fizik simülasyonu kullandığı tespit edilmiştir.
-
-### 1. Şövalye Karakter Matrisi (152 × 119 Piksel / Karakter)
-- Şövalyenin görsel verisi, **152 sütun × 119 satır** uzunluğunda 16'lık tabanda (hexadecimal `0-f`) kodlanmış bir parlaklık matrisidir (`knight-data.js`).
-- Her bir karakter `0` (tamamen şeffaf) ile `f` (en parlak / 1.0) arasında normalize edilmiş parlaklık değerine dönüştürülür.
-- **Mask Dilation (Genişletme Filtresi):** Çimlerin şövalyenin zırhındaki küçük boşluklardan taşmasını engellemek için 3x5 komşuluk çekirdeği ile bir maske filtresi oluşturulur.
-
-### 2. Pelerin ve Atkı Fiziği (Cloth & Ribbon Mechanics)
-- Pelerin, 4 ana şerit (`STRANDS`) ve boyun sarmalı (`WRAP`) olarak modellenmiştir.
-- **Bézier Eğrileri:** Kök (root), kontrol (ctrl) ve uç (tip) noktaları arasında kuadratik eğriler hesaplanır.
-- **Dalga Propagasyonu:** $w_1 = \sin(2\pi(1.3s - t/T) + \phi)$ ve harmonik $w_2$ fonksiyonları ile rüzgar dalgası kökten uca doğru şiddetlenerek iletilir.
-- **Yırtık Uçlar (Tattered Edges):** Deterministik `hash3` fonksiyonu ile kumaşın uçlarında rüzgarda aşınmış lif delikleri ve kumaş dokusu karakterleri (`+`, `x`, `X`, `%`, `&`) üretilir.
-- **Uçuşan Kumaş Parçacıkları:** Pelerinin ucundan kopup rüzgarda savrulan 22 adet iplik parçacığı simüle edilir.
-
-### 3. Çok Katmanlı 3B Derinlikli Çayır (Multi-Depth Grass Field)
-- Ekrana yaklaşık `COLS * 5.5` adet çim bıçağı derinlik fonksiyonuna göre ($depth = rnd^{0.75}$) perspektifli olarak dağıtılır.
-- **Eğim ve Karakter Seçimi:** Rüzgarın kuvvetine göre çimin eğim açısı (slope) anlık hesaplanır:
-  - Dik: `|`
-  - Sağa yatık: `/`
-  - Sola yatık: `\`
-  - Uçlar: `'` veya `,`
-  - Uzak/ufuk noktaları: `.`
-- **Güneş Işıltısı (Specular Sheen):** Rüzgar dalgası geçtikçe eğilen çim uçları ışığı yansıtarak parlar.
-- **Karahindiba Tohumları (Fluff):** Ufuk çizgisinde süzülen polen ve tohumlar periyodik olarak ekranı boydan boya geçer.
-
-### 4. Yüksek Performanslı ASCII Rasterizasyonu ve Doğrudan 32-bit Bellek Yazımı
-- Karakterler canvas metin çizimi ile tek tek basılmak yerine, başlangıçta `Uint8Array` alfa maskeleri olarak hafızada önbelleğe alınır.
-- Çerçeve oluşturulurken `ImageData.data.buffer` üzerinden bir `Uint32Array` (`px32`) dizisine doğrudan piksel renk değerleri yazılarak `putImageData` ile tek seferde ekrana aktarılır. Bu sayede 60 FPS akıcı performans elde edilir.
-- **3 Aşamalı Bloom / Glow:** Görüntü sırasıyla 1/2, 1/4 ve 1/8 boyutlarına küçültülüp bulanıklaştırılarak `lighter` kompozisyon moduyla ekranın üzerine bindirilir ve neon/sinematik bir parlaklık efekti oluşturulur.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://ardaaau.github.io/ascii-knight/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
-## ✨ Eklenen Modern Özellikler ve Geliştirmeler
+## ⚔️ Proje Hakkında
 
-Orijinal projenin estetiği %100 korunurken kullanıcı deneyimini zenginleştiren ek özellikler geliştirilmiştir:
+**ASCII Knight**, doğrudan HTML5 Canvas üzerinde çalışan yüksek performanslı bir ASCII rasterizasyon motoru ve matematiksel fizik simülasyonudur. Harici ağır oyun motorları veya harici kütüphaneler yerine saf JavaScript ile sıfırdan geliştirilmiştir.
 
-1. **Cam Efektli (Glassmorphism) Kontrol Paneli (HUD):**
-   - Anlık FPS sayacı ve ASCII ızgara çözünürlüğü göstergesi (`COLS × ROWS`).
-   - Ekranı sadeleştirmek için `H` tuşu veya kontrol butonu ile tamamen gizlenebilir/küçültülebilir.
+Ekranın merkezinde duran şövalyenin pelerini, Bézier eğrileri ve dalga fonksiyonlarıyla dinamik olarak savrulurken; ayaklarının altındaki çayır rüzgar dalgalarıyla yöne göre karakter değiştirerek parlar ve arka planda saf Web Audio API ile üretilen rüzgar uğultusu eşlik eder.
 
-2. **Dinamik Renk Paletleri (Presets):**
-   - **Classic Twilight:** Orijinal çelik zırh, kan kırmızısı pelerin ve zümrüt çayır.
-   - **Blood Moon:** Koyu kızıl gökyüzü, kor kırmızısı zırh ve alevli pelerin.
-   - **Emerald Aurora:** Mistik kuzey ışıkları, turkuaz pelerin ve zümrüt tonları.
-   - **Neon Synth (Cyberpunk):** Neon macenta pelerin, siber mavi çayır ve mor zırh.
-   - **Golden Hour (Sunset):** Sıcak altın sarısı gün batımı, turuncu pelerin.
+---
 
-3. **Etkileşimli Simülasyon Sürgüleri (Fizik Ayarları):**
-   - Rüzgar şiddeti (Wind Force)
-   - Pelerin dalgalanma genliği (Cape Wave)
-   - Çim yüksekliği (Grass Height)
-   - Parlama / Parıltı seviyesi (Bloom Glow)
+## ✨ Temel Özellikler
 
-4. **Web Audio API ile Gerçek Zamanlı Rüzgar Sentezleyicisi (Procedural Audio):**
-   - Hiçbir harici ses dosyası indirmeden, tarayıcının Web Audio API motorunda pembe gürültü (pink noise), rezonans filtreleri ve LFO kullanılarak rüzgar uğultusu ve çim hışırtısı üretilir.
-   - Rüzgar dalgası şiddetlendikçe sesin frekansı ve volümü simülasyonla tam senkronize olarak yükselir (`M` tuşu ile açılıp kapatılabilir).
+### 1. Pelerin ve Kumaş Fiziği (Cloth & Ribbon Mechanics)
+- Pelerin, Bézier eğrileri üzerine binen çift frekanslı dalga harmonikleri ($w_1, w_2$) ile modellenmiştir.
+- Rüzgarın kuvvetine göre kökten uca doğru şiddetlenen dalgalanma, kıvrılma (twist) ve rüzgarda aşınmış lif dokuları (`+`, `x`, `X`, `%`, `&`) üretilir.
+- Pelerinin ucundan kopup rüzgarda savrulan dinamik iplik parçacıkları simülasyona canlılık katar.
 
-5. **Ekran Görüntüsü ve ASCII Metin Dışa Aktarma:**
-   - `S` tuşu ile yüksek çözünürlüklü PNG formatında duvar kağıdı kaydetme.
-   - `C` tuşu ile o anki kareyi saf ASCII metni olarak panoya kopyalama.
-   - `F` tuşu ile tam ekran deneyimi.
-   - `Space` tuşu ile simülasyonu duraklatma / devam ettirme.
+### 2. Çok Katmanlı 3B Perspektifli Çayır (Perspective Grass Field)
+- Derinlik fonksiyonuna ($depth = rnd^{0.75}$) göre binlerce çim bıçağı perspektifli olarak sahneye yerleştirilir.
+- Rüzgarın kuvvetine göre çimin eğim açısı anlık hesaplanarak en uygun ASCII karakteri seçilir (`|`, `/`, `\`, `'`, `,`, `.`).
+- Rüzgar dalgaları geçtikçe güneşe yansıyan ışıltı (specular sheen) ve ufukta süzülen karahindiba polenleri sahneyi tamamlar.
+
+### 3. Yüksek Performanslı 32-bit Bellek Rasterizasyonu
+- Canvas metin çizimini kare kare yeniden yapmak yerine, tüm ASCII karakterleri bellekte `Uint8Array` alfa maskeleri olarak önbelleğe alınır.
+- Kareler doğrudan `Uint32Array` piksel tamponuna yazılarak 60 FPS akıcı performans sağlanır.
+- **3 Aşamalı Bloom / Glow:** Görüntü ardışık olarak küçültülüp yumuşatılarak ekranın üzerine bindirilir ve neon/sinematik bir parıltı elde edilir.
+
+### 4. Web Audio API ile Prosedürel Rüzgar Sentezleyicisi
+- Hiçbir harici ses dosyası kullanılmadan; pembe gürültü (pink noise), rezonans bant filtreleri ve rüzgar dalgalarıyla senkronize çalışan LFO modülasyonu ile rüzgar uğultusu ve çim hışırtısı üretilir.
+
+### 5. Cam Efektli (Glassmorphism) Kontrol Paneli ve Temalar
+- **5 Renk Paleti:**
+  - 🌑 **Classic Twilight:** Çelik zırh, kan kırmızısı pelerin ve zümrüt çayır.
+  - 🩸 **Blood Moon:** Koyu kızıl gökyüzü, kor kırmızısı zırh ve alevli pelerin.
+  - 🌌 **Emerald Aurora:** Mistik kuzey ışıkları ve turkuaz pelerin.
+  - ⚡ **Neon Synth:** Siberpunk neon macenta ve mor tonlar.
+  - 🌅 **Golden Hour:** Gün batımı altın sarısı ve turuncu tonlar.
+- **Canlı Göstergeler:** Gerçek zamanlı FPS sayacı ve ASCII ızgara çözünürlüğü göstergesi (`COLS × ROWS`).
+- **Fizik Ayar Sürgüleri:** Rüzgar şiddeti, pelerin dalgalanması, çim yüksekliği ve parıltı seviyesi anlık değiştirilebilir.
+
+---
+
+## ⌨️ Klavye Kısayolları
+
+| Tuş | İşlev |
+| :---: | :--- |
+| **SPACE** | Simülasyonu Duraklat / Devam Ettir |
+| **H** | HUD Kontrol Panelini Gizle / Göster |
+| **M** | Rüzgar Sesini Aç / Kapat |
+| **S** | Duvar Kağıdı Ekran Görüntüsü İndir (PNG) |
+| **C** | O Anki Kareyi Saf ASCII Metni Olarak Kopyala |
+| **F** | Tam Ekran Moduna Geç / Çık |
+| **R** | Tüm Ayarları Varsayılana Sıfırla |
 
 ---
 
@@ -78,29 +68,15 @@ Proje sıfır harici bağımlılığa (zero-dependency) sahiptir.
 ### Yöntem 1: Doğrudan Tarayıcıda Açma
 Doğrudan `index.html` dosyasını Google Chrome, Edge veya Firefox tarayıcınızda açabilirsiniz.
 
-### Yöntem 2: Node.js Sunucusu ile (Önerilen)
+### Yöntem 2: Node.js Sunucusu ile
 ```bash
 # Proje dizinine gidin
-cd C:\Users\ardau_o60fdxn\.gemini\antigravity-ide\scratch\ascii-knight
+cd ascii-knight
 
 # Dahili sunucuyu başlatın
 node server.js
 ```
 Tarayıcınızda `http://localhost:3000` adresine gidin.
-
----
-
-## ⌨️ Kısayol Tuşları (Keyboard Shortcuts)
-
-| Tuş | İşlev |
-| :--- | :--- |
-| **SPACE** | Simülasyonu Duraklat / Devam Ettir |
-| **H** | HUD Kontrol Panelini Gizle / Göster |
-| **M** | Rüzgar Sesini Aç / Kapat |
-| **S** | Duvar Kağıdı Ekran Görüntüsü İndir (PNG) |
-| **C** | Güncel ASCII Karesini Panoya Kopyala |
-| **F** | Tam Ekran Moduna Geç / Çık |
-| **R** | Tüm Ayarları Varsayılana Sıfırla |
 
 ---
 
@@ -110,10 +86,10 @@ Tarayıcınızda `http://localhost:3000` adresine gidin.
 ascii-knight/
 ├── index.html       # Ana sayfa ve HUD bileşenleri
 ├── style.css        # Glassmorphic modern koyu tema ve animasyonlar
-├── knight-data.js   # 152x119 Şövalye parlaklık matrisi (Hex 0-f)
+├── knight-data.js   # 152x119 Şövalye parlaklık matrisi
 ├── ascii-knight.js  # Çekirdek ASCII çizim, fizik ve bloom motoru
-├── audio.js         # Web Audio API rüzgar simülasyonu
+├── audio.js         # Web Audio API rüzgar sentezleyicisi
 ├── ui.js            # HUD kontrolleri, kısayollar ve bildirimler
-├── server.js        # Hafif yerel Node.js geliştirme sunucusu
+├── server.js        # Hafif yerel Node.js sunucusu
 └── README.md        # Dokümantasyon
 ```
